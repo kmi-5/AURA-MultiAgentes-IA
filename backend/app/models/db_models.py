@@ -1,0 +1,118 @@
+from datetime import datetime, time
+
+from sqlalchemy import (CheckConstraint, DateTime, ForeignKey, String, Text,
+                        Time, func)
+from sqlalchemy.orm import Mapped, mapped_column
+
+from ..core.db import Base
+
+
+class Paciente(Base):
+    __tablename__ = "pacientes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nombre: Mapped[str] = mapped_column(String(120))
+    edad: Mapped[int]
+    habitacion: Mapped[str] = mapped_column(String(10))
+
+    __table_args__ = (CheckConstraint("edad BETWEEN 0 AND 120", name="ck_pacientes_edad"),)
+
+
+class UsuarioEnfermeria(Base):
+    __tablename__ = "usuarios_enfermeria"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nombre: Mapped[str] = mapped_column(String(120))
+    username: Mapped[str] = mapped_column(String(50), unique=True)
+    rol: Mapped[str] = mapped_column(String(20))
+    password_hash: Mapped[str] = mapped_column(String(200))   # nunca la contraseña en claro
+
+    __table_args__ = (
+        CheckConstraint("rol IN ('enfermeria','supervision','auditoria')", name="ck_usuarios_rol"),
+    )
+
+
+class SignosVitalesRow(Base):
+    __tablename__ = "signos_vitales"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id", ondelete="CASCADE"), index=True)
+    ta_sistolica: Mapped[int]
+    ta_diastolica: Mapped[int]
+    fc: Mapped[int]
+    sato2: Mapped[int]
+    temperatura: Mapped[float]
+    dolor: Mapped[int]
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (CheckConstraint("dolor BETWEEN 0 AND 10", name="ck_signos_dolor"),)
+
+
+class Medicacion(Base):
+    __tablename__ = "medicacion"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id", ondelete="CASCADE"), index=True)
+    medicamento: Mapped[str] = mapped_column(String(120))
+    dosis: Mapped[str] = mapped_column(String(50))
+    horario_programado: Mapped[time] = mapped_column(Time)
+    estado: Mapped[str] = mapped_column(String(15), default="pendiente")
+    timestamp_ejecucion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint("estado IN ('pendiente','completada')", name="ck_medicacion_estado"),
+    )
+
+
+class AlertaSeguridad(Base):
+    __tablename__ = "alertas_seguridad"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id", ondelete="CASCADE"), index=True)
+    tipo_alerta: Mapped[str] = mapped_column(String(50))
+    descripcion: Mapped[str] = mapped_column(Text)
+    estado_revision: Mapped[str] = mapped_column(String(15), default="pendiente")
+    version_reglas: Mapped[str] = mapped_column(String(20))     # trazabilidad (sección 4.1)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint("estado_revision IN ('pendiente','revisada','descartada')",
+                        name="ck_alertas_estado"),
+    )
+
+
+class Tarea(Base):
+    __tablename__ = "tareas"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id", ondelete="CASCADE"), index=True)
+    tipo: Mapped[str] = mapped_column(String(30))               # medicacion | control | revision
+    horario: Mapped[time] = mapped_column(Time)
+    estado: Mapped[str] = mapped_column(String(15), default="pendiente")
+    responsable_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios_enfermeria.id"))
+
+    __table_args__ = (
+        CheckConstraint("estado IN ('pendiente','completada')", name="ck_tareas_estado"),
+    )
+
+
+class PaseTurno(Base):
+    __tablename__ = "pases_turno"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id", ondelete="CASCADE"), index=True)
+    turno: Mapped[str] = mapped_column(String(10))
+    contenido_consolidado: Mapped[str] = mapped_column(Text)
+    idempotency_key: Mapped[str] = mapped_column(String(64), unique=True)   # anti doble click (12.1)
+    incompleto: Mapped[bool] = mapped_column(default=False)
+    timestamp_generacion: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Auditoria(Base):
+    __tablename__ = "auditoria"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios_enfermeria.id"), index=True)
+    tarea: Mapped[str] = mapped_column(String(80))
+    estado: Mapped[str] = mapped_column(String(20))
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
