@@ -23,7 +23,7 @@ def merge_alertas(actual: list[Alerta], nuevas: list[Alerta]) -> list[Alerta]:
 
 class TurnoState(TypedDict, total=False):
     # --- Identidad e idempotencia (las setea FastAPI antes de invocar el grafo) ---
-    thread_id: str
+    thread_id: str                  # "{paciente_id}:{turno}:{fecha}" -> ver make_thread_id()
     paciente_id: int
     turno: Literal["manana", "tarde", "noche"]
     usuario_id: int

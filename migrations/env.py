@@ -51,11 +51,17 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
         context.run_migrations()
 
+def include_object(object, name, type_, reflected, compare_to):
+    # Las tablas checkpoint* las administra LangGraph (PostgresSaver.setup()), no Alembic
+    if type_ == "table" and reflected and name.startswith("checkpoint"):
+        return False
+    return True
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
@@ -75,6 +81,7 @@ def run_migrations_online() -> None:
             connection=connection, 
             target_metadata=target_metadata,
             compare_type=True,
+            include_object=include_object,
         )
 
         with context.begin_transaction():
