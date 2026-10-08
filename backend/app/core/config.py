@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     langsmith_api_key: str | None = None
     langsmith_tracing: bool = False
     langsmith_project: str = "AURA-MultiAgentes-IA"
-
+    seed_password: str | None = None
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", env_file_encoding="utf-8")
 
     @property

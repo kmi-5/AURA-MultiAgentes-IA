@@ -10,6 +10,7 @@ class SignosVitales(BaseModel):
     ta_sistolica: int = Field(ge=50, le=260)
     ta_diastolica: int = Field(ge=30, le=160)
     fc: int = Field(ge=20, le=250)
+    fr: int = Field(ge=4, le=60)
     sato2: int = Field(ge=50, le=100)
     temperatura: float = Field(ge=30.0, le=43.0)
     dolor: int = Field(ge=0, le=10)

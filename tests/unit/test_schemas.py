@@ -6,7 +6,7 @@ def payload(**over):
     base = {
         "paciente_id": 1,
         "turno": "manana",
-        "signos_vitales": {"ta_sistolica": 120, "ta_diastolica": 80, "fc": 72,
+        "signos_vitales": {"ta_sistolica": 120, "ta_diastolica": 80, "fc": 72, "fr": 16,
                            "sato2": 98, "temperatura": 36.6, "dolor": 1},
         "observacion": "Paciente lúcido, vía periférica en MSD",
         "medicacion_programada": ["08:00", "14:00"],

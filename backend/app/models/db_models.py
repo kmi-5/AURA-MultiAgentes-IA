@@ -40,6 +40,7 @@ class SignosVitalesRow(Base):
     ta_sistolica: Mapped[int]
     ta_diastolica: Mapped[int]
     fc: Mapped[int]
+    fr: Mapped[int]
     sato2: Mapped[int]
     temperatura: Mapped[float]
     dolor: Mapped[int]
@@ -55,6 +56,7 @@ class Medicacion(Base):
     paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id", ondelete="CASCADE"), index=True)
     medicamento: Mapped[str] = mapped_column(String(120))
     dosis: Mapped[str] = mapped_column(String(50))
+    frecuencia: Mapped[str] = mapped_column(String(30))     
     horario_programado: Mapped[time] = mapped_column(Time)
     estado: Mapped[str] = mapped_column(String(15), default="pendiente")
     timestamp_ejecucion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

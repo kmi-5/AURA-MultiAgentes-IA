@@ -63,7 +63,7 @@ def include_object(object, name, type_, reflected, compare_to):
         return False
     return True
 
-def run_migrations_online() -> None:
+def run_migrations_online( ) -> None:
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
