@@ -41,6 +41,8 @@ class TurnoState(TypedDict, total=False):
 
     # --- Dueño único: Agente Seguridad (acumula con deduplicación) ---
     alertas: Annotated[list[Alerta], merge_alertas]
+     
+    puntajes_escalas: dict[str, int]    # {"news2": 6, "morse": 45}; lo escribe solo Seguridad
 
     # --- Escriben AMBAS ramas paralelas: reducers obligatorios ---
     errores: Annotated[list[str], operator.add]

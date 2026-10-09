@@ -13,6 +13,7 @@ from ..models.db_models import (
     SignosVitalesRow,
     Tarea,
     UsuarioEnfermeria,
+    ValoracionCaidasRow,
 )
 from .config import settings
 from .db import SessionLocal
@@ -21,8 +22,10 @@ from .db import SessionLocal
 # Solo tablas de negocio: NO toca alembic_version ni las tablas checkpoint*
 TABLAS = (
     "auditoria, tareas, pases_turno, alertas_seguridad, medicacion, "
-    "signos_vitales, pacientes, usuarios_enfermeria"
+    "valoracion_caidas, signos_vitales, pacientes, usuarios_enfermeria"
 )
+
+TURNO_SEED = "manana"   # mismo default que entrada_de()
 
 
 def _hash(password: str) -> str:
@@ -46,14 +49,12 @@ def run(reset: bool = False) -> None:
             rol="enfermeria",
             password_hash=_hash(password),
         )
-
         supervisor = UsuarioEnfermeria(
             nombre="Supervisor Demo",
             username="supervisor1",
             rol="supervision",
             password_hash=_hash(password),
         )
-
         auditor = UsuarioEnfermeria(
             nombre="Auditor Demo",
             username="auditor1",
@@ -73,12 +74,10 @@ def run(reset: bool = False) -> None:
             s.add(p)
             s.flush()
 
-            s.add(
-                SignosVitalesRow(
-                    paciente_id=p.id,
-                    **c["signos"],
-                )
-            )
+            s.add(SignosVitalesRow(paciente_id=p.id, **c["signos"]))
+
+            # Ítems de Morse; el puntaje lo calcula el motor de reglas, no se guarda acá
+            s.add(ValoracionCaidasRow(paciente_id=p.id, turno=TURNO_SEED, **c["caidas"]))
 
             for medicamento, dosis, frecuencia, hhmm in c["medicacion"]:
                 horario = time.fromisoformat(hhmm)
@@ -87,31 +86,10 @@ def run(reset: bool = False) -> None:
                 s.add(Tarea(paciente_id=p.id, tipo="medicacion", horario=horario,
                             responsable_id=enfermera.id))
 
-                s.add(
-                    Tarea(
-                        paciente_id=p.id,
-                        tipo="medicacion",
-                        horario=horario,
-                        responsable_id=enfermera.id,
-                    )
-                )
+            s.add(Tarea(paciente_id=p.id, tipo="control", horario=time(12, 0),
+                        responsable_id=enfermera.id))
 
-            s.add(
-                Tarea(
-                    paciente_id=p.id,
-                    tipo="control",
-                    horario=time(12, 0),
-                    responsable_id=enfermera.id,
-                )
-            )
-
-        s.add(
-            Auditoria(
-                usuario_id=supervisor.id,
-                tarea="seed_datos_prueba",
-                estado="ok",
-            )
-        )
+        s.add(Auditoria(usuario_id=supervisor.id, tarea="seed_datos_prueba", estado="ok"))
 
     print(
         f"Seed OK: {len(CASOS)} pacientes y 3 usuarios "
@@ -127,11 +105,9 @@ def run(reset: bool = False) -> None:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-
     ap.add_argument(
         "--reset",
         action="store_true",
         help="BORRA los datos de negocio y recarga el seed",
     )
-
     run(reset=ap.parse_args().reset)

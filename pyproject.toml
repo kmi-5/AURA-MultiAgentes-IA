@@ -8,16 +8,20 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.20.0",
+    "bcrypt>=5.0.0",
     "fastapi>=0.141.1",
     "langchain-google-genai>=4.4.0",
     "langchain-postgres>=0.0.18",
     "langgraph>=1.2.12",
-    "psycopg[binary]>=3.3.6",
+    "langgraph-checkpoint-postgres>=3.1.2",
+    "psycopg[binary,pool]>=3.3.6",
     "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
     "pyjwt>=2.15.1",
     "pytest>=9.1.1",
     "python-dotenv>=1.2.3",
+    "sqlalchemy>=2.1.1",
     "streamlit>=1.64.0",
 ]
 
@@ -27,3 +31,7 @@ aura-multiagentes-ia = "aura_multiagentes_ia:main"
 [build-system]
 requires = ["uv_build>=0.12.20,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

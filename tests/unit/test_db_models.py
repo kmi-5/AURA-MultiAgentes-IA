@@ -3,11 +3,11 @@ from backend.app.models import db_models  # noqa: F401  (registra los modelos en
 
 TABLAS_ESPERADAS = {
     "pacientes", "signos_vitales", "medicacion", "alertas_seguridad",
-    "tareas", "pases_turno", "usuarios_enfermeria", "auditoria",
+    "tareas", "pases_turno", "usuarios_enfermeria", "auditoria", "valoracion_caidas",
 }
 
 
-def test_las_8_tablas_estan_registradas():
+def test_las_9_tablas_estan_registradas():
     assert set(Base.metadata.tables) == TABLAS_ESPERADAS
 
 

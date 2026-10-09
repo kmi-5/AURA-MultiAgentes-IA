@@ -1,7 +1,7 @@
 from datetime import datetime, time
 
 from sqlalchemy import (CheckConstraint, DateTime, ForeignKey, String, Text,
-                        Time, func)
+                        Time, func, text)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..core.db import Base
@@ -44,9 +44,37 @@ class SignosVitalesRow(Base):
     sato2: Mapped[int]
     temperatura: Mapped[float]
     dolor: Mapped[int]
+    o2_suplementario: Mapped[bool | None]
+    conciencia: Mapped[str | None] = mapped_column(String(1))      # ACVPU
+    escala_spo2: Mapped[int] = mapped_column(server_default=text("1"))
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (CheckConstraint("dolor BETWEEN 0 AND 10", name="ck_signos_dolor"),)
+
+
+class ValoracionCaidasRow(Base):
+    """Ítems de la Morse Fall Scale. El puntaje lo calcula el motor de reglas."""
+    __tablename__ = "valoracion_caidas"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id", ondelete="CASCADE"), index=True)
+    turno: Mapped[str] = mapped_column(String(10))
+    antecedente_caidas: Mapped[bool]
+    diagnostico_secundario: Mapped[bool]
+    ayuda_deambular: Mapped[str] = mapped_column(String(30))
+    via_iv: Mapped[bool]
+    marcha: Mapped[str] = mapped_column(String(20))
+    estado_mental: Mapped[str] = mapped_column(String(25))
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint(
+            "ayuda_deambular IN ('ninguna_o_asistida','baston_muletas_andador','se_apoya_en_muebles')",
+            name="ck_caidas_ayuda"),
+        CheckConstraint("marcha IN ('normal_o_inmovil','debil','alterada')", name="ck_caidas_marcha"),
+        CheckConstraint("estado_mental IN ('conoce_limites','olvida_limitaciones')",
+                        name="ck_caidas_estado_mental"),
+    )
 
 
 class Medicacion(Base):
@@ -56,7 +84,7 @@ class Medicacion(Base):
     paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id", ondelete="CASCADE"), index=True)
     medicamento: Mapped[str] = mapped_column(String(120))
     dosis: Mapped[str] = mapped_column(String(50))
-    frecuencia: Mapped[str] = mapped_column(String(30))     
+    frecuencia: Mapped[str] = mapped_column(String(30))
     horario_programado: Mapped[time] = mapped_column(Time)
     estado: Mapped[str] = mapped_column(String(15), default="pendiente")
     timestamp_ejecucion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
