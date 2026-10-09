@@ -1,0 +1,123 @@
+# Reglas del Agente Seguridad. Las evalúa un motor determinista (paso 2.2).
+# El LLM NO crea ni suprime alertas: solo redacta la descripción de las que dispara el motor.
+# Cualquier cambio de umbral o regla => subir "version" (va a alertas_seguridad.version_reglas).
+#
+# fuente:   de dónde sale el umbral. "convencion_local" = sin fuente citable.
+# validada: true solo si la regla es aplicación directa de una fuente publicada.
+#           Las reglas locales siempre false hasta que las valide una colega clínica.
+
+version: "1.0.0"
+
+reglas:
+  # --- Escalas con fuente publicada (umbrales NO modificables) ---
+  - id: news2_rojo_unico
+    tipo: escala
+    escala: news2
+    criterio: parametro_rojo
+    descripcion: "Un parámetro fisiológico individual puntúa 3 en NEWS2"
+    fuente: "NEWS2, Royal College of Physicians, 2017"
+    validada: true
+
+  - id: news2_medio
+    tipo: escala
+    escala: news2
+    criterio: total
+    minimo: 5
+    maximo: 6
+    descripcion: "Puntaje total NEWS2 medio (5-6)"
+    fuente: "NEWS2, Royal College of Physicians, 2017"
+    validada: true
+
+  - id: news2_alto
+    tipo: escala
+    escala: news2
+    criterio: total
+    minimo: 7
+    descripcion: "Puntaje total NEWS2 alto (7 o más)"
+    fuente: "NEWS2, Royal College of Physicians, 2017"
+    validada: true
+
+  - id: riesgo_caida
+    tipo: escala
+    escala: morse
+    criterio: total
+    minimo: 45
+    descripcion: "Puntaje alto en la Escala de Caídas de Morse"
+    fuente: "Morse, Morse y Tylko, 1989, Can J Aging 8(4):366-377"
+    validada: true
+
+  # --- Alertas por parámetro. El corte coincide con una banda de NEWS2,
+  #     pero usarlo como alerta es una decisión local: validada=false. ---
+  - id: taquipnea
+    tipo: umbral
+    parametro: fr
+    operador: ">="
+    valor: 21
+    descripcion: "Frecuencia respiratoria elevada"
+    fuente: "RCP 2017, corte de banda NEWS2 (FR 21-24 puntúa 2)"
+    validada: false
+
+  - id: taquicardia
+    tipo: umbral
+    parametro: fc
+    operador: ">="
+    valor: 111
+    descripcion: "Frecuencia cardíaca elevada"
+    fuente: "RCP 2017, corte de banda NEWS2 (FC 111-130 puntúa 2)"
+    validada: false
+
+  - id: bradicardia
+    tipo: umbral
+    parametro: fc
+    operador: "<="
+    valor: 50
+    descripcion: "Frecuencia cardíaca baja"
+    fuente: "RCP 2017, corte de banda NEWS2 (FC 41-50 puntúa 1)"
+    validada: false
+
+  - id: hipotension
+    tipo: umbral
+    parametro: ta_sistolica
+    operador: "<="
+    valor: 90
+    descripcion: "Tensión arterial sistólica baja"
+    fuente: "RCP 2017, corte de banda NEWS2 (TAS <=90 puntúa 3)"
+    validada: false
+
+  - id: hipertermia
+    tipo: umbral
+    parametro: temperatura
+    operador: ">="
+    valor: 38.1
+    descripcion: "Temperatura elevada"
+    fuente: "RCP 2017, corte de banda NEWS2 (38.1-39.0 puntúa 1)"
+    validada: false
+
+  - id: saturacion_baja
+    tipo: umbral
+    parametro: sato2
+    operador: "<="
+    valor: 93
+    aplica_escala_spo2: 1
+    descripcion: "Saturación de oxígeno baja"
+    fuente: "RCP 2017, corte de banda NEWS2 escala 1 (SpO2 92-93 puntúa 2)"
+    validada: false
+
+  # --- Reglas locales sin fuente citable (pendientes de validación clínica) ---
+  - id: hipertension
+    tipo: umbral
+    parametro: ta_sistolica
+    operador: ">="
+    valor: 180
+    descripcion: "Tensión arterial sistólica elevada"
+    fuente: convencion_local
+    validada: false
+
+  - id: dolor_severo
+    tipo: umbral
+    parametro: dolor
+    operador: ">="
+    valor: 7
+    descripcion: "Dolor referido severo"
+    fuente: convencion_local
+    validada: false
