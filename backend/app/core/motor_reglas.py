@@ -21,8 +21,8 @@ class AlertaMotor:
     regla_id: str                    # va a alertas_seguridad.tipo_alerta
     descripcion: str                 # descripción base de la regla (el LLM la redacta)
     fuente: str
+    severidad: str                   # baja | media | alta, declarada en la regla
     observado: dict[str, object]     # qué dato disparó la alerta (trazabilidad)
-
 
 @dataclass(frozen=True)
 class ResultadoSeguridad:
@@ -104,7 +104,9 @@ def evaluar_seguridad(
                     observado = {"morse": morse.puntaje}
 
         if observado is not None:
-            alertas.append(AlertaMotor(regla.id, regla.descripcion, regla.fuente, observado))
+            alertas.append(AlertaMotor(regla_id=regla.id, descripcion=regla.descripcion,
+                                       fuente=regla.fuente, severidad=regla.severidad,
+                                       observado=observado))
 
     avisos: list[str] = []
     if not news2.aplicable:

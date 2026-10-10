@@ -17,6 +17,7 @@ class _ReglaBase(BaseModel):
     descripcion: str = Field(min_length=3)
     fuente: str = Field(min_length=3)
     validada: bool
+    severidad: Literal["baja", "media", "alta"] = "media"
     edad_minima: int | None = Field(default=None, ge=0, le=120)   # None = sin restricción
 
     def aplica_a_edad(self, edad: int) -> bool:

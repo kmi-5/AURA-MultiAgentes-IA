@@ -66,3 +66,9 @@ def test_sin_datos_no_dispara_alertas_ni_falla():
     r = evaluar_seguridad(edad=40, signos={}, valoracion_caidas=None)
     assert r.alertas == ()
     assert set(r.avisos) == {"news2_parcial", "morse_no_evaluable"}
+
+def test_la_severidad_viaja_con_la_alerta():
+    r = _evaluar(_caso("saturacion_baja_y_taquipnea"))
+    sev = {a.regla_id: a.severidad for a in r.alertas}
+    assert sev["news2_alto"] == "alta"
+    assert sev["taquipnea"] == "media"

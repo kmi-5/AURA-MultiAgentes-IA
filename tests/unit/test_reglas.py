@@ -19,7 +19,7 @@ def _regla(datos, id_):
 
 def test_el_yaml_real_carga_con_12_reglas_unicas():
     c = cargar_reglas()
-    assert c.version == "1.1.0"
+    assert c.version == "1.2.0"
     assert len(c.reglas) == 12
     assert len({r.id for r in c.reglas}) == 12
 
@@ -116,5 +116,15 @@ def test_aplica_a_edad():
 @pytest.mark.parametrize("valor", [-1, 121])
 def test_edad_minima_fuera_de_rango_se_rechaza(datos, valor):
     _regla(datos, "taquipnea")["edad_minima"] = valor
+    with pytest.raises(ValidationError):
+        ConjuntoReglas.model_validate(datos)
+
+def test_news2_alto_es_severidad_alta_y_el_resto_media():
+    for r in cargar_reglas().reglas:
+        assert r.severidad == ("alta" if r.id == "news2_alto" else "media"), r.id
+
+
+def test_severidad_invalida_se_rechaza(datos):
+    _regla(datos, "taquipnea")["severidad"] = "critica"
     with pytest.raises(ValidationError):
         ConjuntoReglas.model_validate(datos)

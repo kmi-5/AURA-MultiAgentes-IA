@@ -44,6 +44,8 @@ class TurnoState(TypedDict, total=False):
      
     puntajes_escalas: dict[str, int]    # {"news2": 6, "morse": 45}; lo escribe solo Seguridad
 
+    avisos_seguridad: list[str]         # news2_parcial / news2_no_aplicable / morse_no_evaluable; solo Seguridad
+
     # --- Escriben AMBAS ramas paralelas: reducers obligatorios ---
     errores: Annotated[list[str], operator.add]
     estado_nodos: Annotated[dict[str, str], merge_dicts]

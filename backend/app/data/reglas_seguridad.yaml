@@ -2,15 +2,15 @@
 # El LLM NO crea ni suprimir alertas: solo redacta la descripción de las que dispara el motor.
 # Cualquier cambio de umbral o regla => subir "version" (va a alertas_seguridad.version_reglas).
 #
-# fuente:      de dónde sale el umbral. "convencion_local" = sin fuente citable.
 # validada:    true solo si la regla es aplicación directa de una fuente publicada.
 #              Las reglas locales siempre false hasta que las valide una colega clínica.
 # edad_minima: la regla no se evalúa por debajo de esa edad. NEWS2 no aplica a menores
 #              de 16, así que todas las reglas derivadas de NEWS2 llevan 16.
-#
-# Historial: 1.0.0 versión inicial | 1.1.0 agrega edad_minima
+# severidad:   baja | media | alta (default media). Solo news2_alto es "alta" (NEWS2: riesgo
+#              clínico alto). El resto queda en "media" hasta que lo valide la colega clínica.
+# Historial: 1.0.0 versión inicial | 1.1.0 agrega edad_minima | 1.2.0 agrega severidad
 
-version: "1.1.0"
+version: "1.2.0"
 
 reglas:
   # --- Escalas con fuente publicada (umbrales NO modificables) ---
@@ -42,6 +42,7 @@ reglas:
     descripcion: "Puntaje total NEWS2 alto (7 o más)"
     fuente: "NEWS2, Royal College of Physicians, 2017"
     validada: true
+    severidad: alta
     edad_minima: 16
 
   - id: riesgo_caida
