@@ -17,6 +17,10 @@ class _ReglaBase(BaseModel):
     descripcion: str = Field(min_length=3)
     fuente: str = Field(min_length=3)
     validada: bool
+    edad_minima: int | None = Field(default=None, ge=0, le=120)   # None = sin restricción
+
+    def aplica_a_edad(self, edad: int) -> bool:
+        return self.edad_minima is None or edad >= self.edad_minima
 
     @model_validator(mode="after")
     def _local_no_puede_estar_validada(self):
