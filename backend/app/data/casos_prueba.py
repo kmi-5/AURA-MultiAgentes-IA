@@ -2,7 +2,8 @@
 
 - `news2_esperado` y `morse_esperado` están calculados A MANO con las tablas de
   NEWS2 (RCP 2017) y Morse (1989). Deben revisarse contra las fuentes.
-- `alertas_esperadas` es PROVISORIO: se redefine en el paso 2.1d con las reglas versionadas.
+- `alertas_esperadas` corresponde a las reglas de `reglas_seguridad.yaml` v1.0.0.
+  Si cambia un umbral o una regla, hay que revisar este campo junto con la versión.
 """
 
 CASOS = [
@@ -47,7 +48,7 @@ CASOS = [
         "dispositivos": ["cánula nasal"],
         "medicacion": [("Salbutamol", "2 inhalaciones", "cada 8 hs", "08:00")],
         "news2_esperado": 9, "morse_esperado": 0,
-        "alertas_esperadas": {"saturacion_baja", "taquipnea"},
+        "alertas_esperadas": {"saturacion_baja", "taquipnea", "news2_rojo_unico", "news2_alto"},
     },
     {
         "escenario": "hipertermia_taquicardia_y_taquipnea",
@@ -61,7 +62,7 @@ CASOS = [
         "dispositivos": ["vía periférica MSD", "drenaje"],
         "medicacion": [("Ceftriaxona", "1 g", "cada 12 hs", "08:00")],
         "news2_esperado": 6, "morse_esperado": 20,
-        "alertas_esperadas": {"hipertermia", "taquicardia", "taquipnea"},
+        "alertas_esperadas": {"hipertermia", "taquicardia", "taquipnea", "news2_rojo_unico", "news2_medio"},
     },
     {
         "escenario": "hipertension",
@@ -89,7 +90,7 @@ CASOS = [
         "dispositivos": ["vía periférica MSI"],
         "medicacion": [("Ketorolac", "30 mg", "cada 8 hs", "10:00")],
         "news2_esperado": 0, "morse_esperado": 20,
-        "alertas_esperadas": {"dolor_intenso"},
+        "alertas_esperadas": {"dolor_severo"},
     },
     {
         "escenario": "riesgo_caida_y_bradicardia",
@@ -103,7 +104,7 @@ CASOS = [
         "dispositivos": ["vía periférica MSI", "sonda vesical"],
         "medicacion": [("Omeprazol", "20 mg", "cada 24 hs", "08:00")],
         "news2_esperado": 8, "morse_esperado": 70,
-        "alertas_esperadas": {"riesgo_caida", "bradicardia"},
+        "alertas_esperadas": {"riesgo_caida", "bradicardia", "news2_rojo_unico", "news2_alto"},
     },
     {
         "escenario": "postquirurgico_estable",
@@ -131,7 +132,7 @@ CASOS = [
         "dispositivos": ["vía periférica MSD"],
         "medicacion": [("Dipirona", "500 mg", "cada 8 hs", "08:00")],
         "news2_esperado": 7, "morse_esperado": 20,
-        "alertas_esperadas": {"hipotension", "taquicardia"},
+        "alertas_esperadas": {"hipotension", "taquicardia", "news2_rojo_unico", "news2_alto"},
     },
     {
         "escenario": "medicacion_multiple_sin_alertas",
