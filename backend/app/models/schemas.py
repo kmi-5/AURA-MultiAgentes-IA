@@ -2,9 +2,8 @@
 
 from enum import Enum
 from typing import Literal, Optional
-
 from pydantic import BaseModel, Field, field_validator, model_validator
-
+from ..core import sanitizar as san
 
 class NivelConciencia(str, Enum):
     """Escala ACVPU (NEWS2). C = confusión NUEVA."""
@@ -85,11 +84,18 @@ class DatosEntrada(BaseModel):
 
     @field_validator("observacion")
     @classmethod
-    def limpiar_observacion(cls, v: str) -> str:
-        # Sanitización mínima: sin caracteres de control y espacios normalizados.
-        # El filtrado de instrucciones embebidas (prompt injection) va en Fase 2.
-        v = "".join(ch for ch in v if ch.isprintable() or ch in "\n ")
-        return " ".join(v.split())
+    def sanitizar_observacion(cls, v: str) -> str:
+        return san.sanitizar_observacion(v)
+
+    @field_validator("dispositivos")
+    @classmethod
+    def sanitizar_dispositivos(cls, v: list[str]) -> list[str]:
+        return san.sanitizar_dispositivos(v)
+
+    @field_validator("medicacion_programada")
+    @classmethod
+    def validar_horas(cls, v: list[str]) -> list[str]:
+        return [san.validar_hora(h) for h in v]
 
     @field_validator("medicacion_programada")
     @classmethod
