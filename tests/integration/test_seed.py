@@ -1,5 +1,5 @@
+import pytest
 from sqlalchemy import func, select
-
 from backend.app.core.db import SessionLocal
 from backend.app.core.seed import run
 from backend.app.data.casos_prueba import CASOS
@@ -11,6 +11,9 @@ from backend.app.models.db_models import (
     ValoracionCaidasRow,
 )
 
+@pytest.fixture(autouse=True, scope="module")
+def base_con_el_seed_limpio():
+    run(reset=True)          # el módulo parte siempre del seed, sin restos del demo
 
 def _conteos():
     with SessionLocal() as s:

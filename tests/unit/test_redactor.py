@@ -4,7 +4,7 @@ import pytest
 
 from backend.app.agents.gemini import _texto
 from backend.app.agents.redactor import (
-    RedactorError, construir_prompt, crear_redactor, parsear_salida, validar_descripcion,
+    RedactorError, construir_prompt, crear_redactor, parsear_salida, validar_descripcion, es_error_permanente
 )
 from backend.app.agents.seguridad import crear_nodo_seguridad
 from backend.app.core.motor_reglas import evaluar_seguridad
@@ -243,7 +243,6 @@ def test_el_texto_libre_del_paciente_nunca_llega_al_llm():
     assert prompts and not any("IGNORA" in p for p in prompts)
     assert {a.tipo_alerta for a in alertas} == caso["alertas_esperadas"]
 
-
 # --- adaptador: normalización de la respuesta ---
 
 def test_texto_de_una_respuesta_str():
@@ -263,3 +262,48 @@ def test_texto_ignora_las_partes_que_no_son_texto():
         {"type": "image", "url": "x"},
         "la",
     ]) == "hola"
+
+class _ErrorHttp(Exception):
+    def __init__(self, code):
+        super().__init__(f"HTTP {code}")
+        self.code = code
+
+
+@pytest.mark.parametrize("codigo, permanente", [
+    (404, True), (401, True), (403, True), (429, False), (500, False), (503, False)])
+def test_clasifica_los_errores_del_api(codigo, permanente):
+    assert es_error_permanente(_ErrorHttp(codigo)) is permanente
+
+
+def test_el_error_permanente_se_detecta_en_la_cadena_de_causas():
+    envuelto = RuntimeError("Error calling model")
+    envuelto.__cause__ = _ErrorHttp(404)
+    assert es_error_permanente(envuelto) is True
+
+
+def test_un_error_sin_codigo_no_es_permanente():
+    assert es_error_permanente(ValueError("salida inválida")) is False
+
+
+def test_un_error_permanente_no_se_reintenta(taquipnea):
+    llamadas = []
+
+    def invocar(prompt):
+        llamadas.append(prompt)
+        raise _ErrorHttp(404)
+
+    with pytest.raises(RedactorError):
+        crear_redactor(invocar, sleep=lambda _s: None)(taquipnea)
+    assert len(llamadas) == 1
+
+
+def test_un_error_transitorio_si_se_reintenta(taquipnea):
+    llamadas = []
+
+    def invocar(prompt):
+        llamadas.append(prompt)
+        raise _ErrorHttp(429)
+
+    with pytest.raises(RedactorError):
+        crear_redactor(invocar, sleep=lambda _s: None)(taquipnea)
+    assert len(llamadas) == 3

@@ -80,6 +80,20 @@ def validar_descripcion(texto: str, alerta: AlertaMotor) -> None:
         raise ValueError(f"números no presentes en los datos: {sorted(inventados)}")
 
 
+def es_error_permanente(e: Exception) -> bool:
+    """Errores del API que no se arreglan reintentando (modelo inexistente, clave inválida,
+    pedido mal formado). Los 408/429 y los 5xx sí son transitorios."""
+    actual: BaseException | None = e
+    for _ in range(4):                                   # sigue la cadena de causas
+        codigo = getattr(actual, "code", None) or getattr(actual, "status_code", None)
+        if isinstance(codigo, int):
+            return 400 <= codigo < 500 and codigo not in (408, 429)
+        actual = actual.__cause__
+        if actual is None:
+            break
+    return False
+
+
 def crear_redactor(
     invocar: Callable[[str], str],
     *,
@@ -91,9 +105,11 @@ def crear_redactor(
     def redactor(alerta: AlertaMotor) -> str:
         prompt = construir_prompt(alerta)
         ultimo_error: Exception | None = None
+        intentos = 0
         for intento in range(max_intentos):
             if intento > 0:
                 sleep(espera_base * 2 ** (intento - 1) + jitter())     # 1 s, 2 s, 4 s...
+            intentos = intento + 1
             try:
                 salida = parsear_salida(invocar(prompt))
                 validar_descripcion(salida.descripcion, alerta)
@@ -101,9 +117,11 @@ def crear_redactor(
             except Exception as e:                      # error del API o salida inválida
                 ultimo_error = e
                 logger.warning("Redacción de %s falló (intento %d/%d): %s",
-                               alerta.regla_id, intento + 1, max_intentos, e)
+                               alerta.regla_id, intentos, max_intentos, e)
+                if es_error_permanente(e):
+                    break                               # reintentar no lo arregla
         raise RedactorError(
-            f"{alerta.regla_id}: sin redacción válida tras {max_intentos} intentos"
+            f"{alerta.regla_id}: sin redacción válida tras {intentos} intento(s)"
         ) from ultimo_error
 
     return redactor

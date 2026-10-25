@@ -1,6 +1,5 @@
 import operator
 from typing import Annotated, Literal, TypedDict
-
 from .schemas import Alerta, DatosEstructurados
 
 
@@ -41,7 +40,9 @@ class TurnoState(TypedDict, total=False):
 
     # --- Dueño único: Agente Seguridad (acumula con deduplicación) ---
     alertas: Annotated[list[Alerta], merge_alertas]
-     
+    
+    alertas_actuales: list[Alerta]      # solo las de ESTA ejecución (sin reducer); lo escribe solo Seguridad      # solo las de ESTA ejecución (sin reducer); lo escribe solo Seguridad
+
     puntajes_escalas: dict[str, int]    # {"news2": 6, "morse": 45}; lo escribe solo Seguridad
 
     avisos_seguridad: list[str]         # news2_parcial / news2_no_aplicable / morse_no_evaluable; solo Seguridad

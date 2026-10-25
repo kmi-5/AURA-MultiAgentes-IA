@@ -102,3 +102,42 @@ def test_la_edad_sale_de_la_base_y_no_del_payload():
     out = _nodo(caso)(_state(caso, edad_payload=70))   # el payload dice 70
     assert {a.tipo_alerta for a in out["alertas"]} == {"dolor_severo"}
     assert out["avisos_seguridad"] == ["news2_no_aplicable"]
+
+def test_alertas_actuales_son_las_de_esta_ejecucion():
+    caso = _caso("saturacion_baja_y_taquipnea")
+    out = _nodo(caso)(_state(caso))
+    assert out["alertas_actuales"] == out["alertas"]
+
+
+def test_agotado_el_presupuesto_el_resto_de_las_alertas_usa_el_texto_determinista():
+    caso = _caso("hipertermia_taquicardia_y_taquipnea")      # 5 alertas
+    llamadas = []
+    reloj_falso = {"t": -15.0}
+
+    def reloj():
+        reloj_falso["t"] += 15.0                              # 0, 15, 30, 45...
+        return reloj_falso["t"]
+
+    def redactor(alerta):
+        llamadas.append(alerta.regla_id)
+        return "Texto redactado por el modelo."
+
+    nodo = crear_nodo_seguridad(obtener_edad=lambda _p: caso["edad"], redactor=redactor,
+                                presupuesto_redaccion_s=20.0, reloj=reloj)
+    out = nodo(_state(caso))
+    assert len(llamadas) == 1                                 # solo la primera entra en el presupuesto
+    assert {a.tipo_alerta for a in out["alertas"]} == caso["alertas_esperadas"]
+
+def test_tras_un_fallo_del_redactor_las_alertas_restantes_no_lo_vuelven_a_llamar():
+    caso = _caso("hipertermia_taquicardia_y_taquipnea")      # 5 alertas
+    llamadas = []
+
+    def caido(alerta):
+        llamadas.append(alerta.regla_id)
+        raise RuntimeError("503 UNAVAILABLE")
+
+    nodo = crear_nodo_seguridad(obtener_edad=lambda _p: caso["edad"], redactor=caido)
+    out = nodo(_state(caso))
+
+    assert len(llamadas) == 1                                 # corte de circuito tras el primer fallo
+    assert {a.tipo_alerta for a in out["alertas"]} == caso["alertas_esperadas"]    

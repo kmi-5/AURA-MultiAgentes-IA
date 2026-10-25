@@ -1,15 +1,34 @@
-from functools import lru_cache
+import inspect
 from datetime import date
+from enum import Enum
+from functools import lru_cache
+
+from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
-from langgraph.checkpoint.postgres import PostgresSaver
+from pydantic import BaseModel
 
+from ..models import schemas
 from .config import settings
 
 
 def make_thread_id(paciente_id: int, turno: str, fecha: date) -> str:
     """Un thread (= un checkpoint aislado) por paciente-turno-día."""
     return f"{paciente_id}:{turno}:{fecha.isoformat()}"
+
+
+def tipos_permitidos() -> list[tuple[str, str]]:
+    """Modelos y enums propios que viajan en el estado del grafo.
+
+    LangGraph solo deserializa del checkpoint los tipos registrados (en una versión futura
+    bloqueará el resto). Se derivan de models/schemas.py para no mantener la lista a mano.
+    """
+    return sorted(
+        (c.__module__, c.__name__)
+        for _, c in inspect.getmembers(schemas, inspect.isclass)
+        if c.__module__ == schemas.__name__ and issubclass(c, (BaseModel, Enum))
+    )
 
 
 @lru_cache(maxsize=1)
@@ -28,7 +47,8 @@ def get_pool() -> ConnectionPool:
 
 
 def get_checkpointer() -> PostgresSaver:
-    return PostgresSaver(get_pool())
+    serde = JsonPlusSerializer(allowed_msgpack_modules=tipos_permitidos())
+    return PostgresSaver(get_pool(), serde=serde)
 
 
 if __name__ == "__main__":

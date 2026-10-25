@@ -1,11 +1,10 @@
 import uuid
 from datetime import date
-
 from langgraph.graph import StateGraph, START, END
-
 from backend.app.core.checkpointer import get_checkpointer, make_thread_id
 from backend.app.models.state import TurnoState
-
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+import langgraph.checkpoint.base as b
 
 def _grafo_minimo():
     def registrar(state):
@@ -49,3 +48,20 @@ def test_threads_distintos_estan_aislados():
     finally:
         get_checkpointer().delete_thread(tid_a)
         get_checkpointer().delete_thread(tid_b)
+
+def test_get_checkpointer_pasa_el_serializador_con_la_lista(monkeypatch):
+    from backend.app.core import checkpointer as modulo
+
+    capturado = {}
+
+    class Falso:
+        def __init__(self, pool, serde=None):
+            capturado.update(pool=pool, serde=serde)
+
+    monkeypatch.setattr(modulo, "PostgresSaver", Falso)
+    monkeypatch.setattr(modulo, "get_pool", lambda: "pool-falso")
+
+    modulo.get_checkpointer()
+
+    assert capturado["pool"] == "pool-falso"
+    assert isinstance(capturado["serde"], JsonPlusSerializer)
