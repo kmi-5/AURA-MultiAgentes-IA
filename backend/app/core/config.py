@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     langsmith_project: str = "AURA-MultiAgentes-IA"
     seed_password: str | None = None
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", env_file_encoding="utf-8")
+    jwt_secret: str                  # sin default: si falta, la app no arranca
+    jwt_algoritmo: str = "HS256"
+    jwt_expira_minutos: int = 60
+    idempotencia_ttl_horas: int = 24
 
     @property
     def sqlalchemy_url(self) -> str:

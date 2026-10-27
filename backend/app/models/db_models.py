@@ -1,7 +1,6 @@
 from datetime import datetime, time
 
-from sqlalchemy import (CheckConstraint, DateTime, ForeignKey, String, Text,
-                        Time, func, text)
+from sqlalchemy import (CheckConstraint, DateTime, ForeignKey, String, Text, JSON, Time, func, text)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..core.db import Base
@@ -142,7 +141,22 @@ class Auditoria(Base):
     __tablename__ = "auditoria"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios_enfermeria.id"), index=True)
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios_enfermeria.id"), index=True, nullable=True)
+    detalle: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     tarea: Mapped[str] = mapped_column(String(80))
     estado: Mapped[str] = mapped_column(String(20))
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+class Idempotencia(Base):
+    __tablename__ = "idempotencia"
+
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios_enfermeria.id"), primary_key=True)
+    endpoint: Mapped[str] = mapped_column(String(64), primary_key=True)
+    clave: Mapped[str] = mapped_column(String(128), primary_key=True)
+    huella: Mapped[str] = mapped_column(String(64))
+    estado: Mapped[str] = mapped_column(String(16))          # en_proceso | completada
+    status_code: Mapped[int | None] = mapped_column(nullable=True)
+    respuesta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))

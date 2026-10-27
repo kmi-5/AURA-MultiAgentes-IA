@@ -2,7 +2,7 @@ import argparse
 import secrets
 from datetime import time
 
-import bcrypt
+from .seguridad import hashear_password as _hash
 from sqlalchemy import func, select, text
 
 from ..data.casos_prueba import CASOS
@@ -19,17 +19,12 @@ from .config import settings
 from .db import SessionLocal
 
 
-# Solo tablas de negocio: NO toca alembic_version ni las tablas checkpoint*
 TABLAS = (
-    "auditoria, tareas, pases_turno, alertas_seguridad, medicacion, "
+    "idempotencia, auditoria, tareas, pases_turno, alertas_seguridad, medicacion, "
     "valoracion_caidas, signos_vitales, pacientes, usuarios_enfermeria"
 )
 
 TURNO_SEED = "manana"   # mismo default que entrada_de()
-
-
-def _hash(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 def run(reset: bool = False) -> None:

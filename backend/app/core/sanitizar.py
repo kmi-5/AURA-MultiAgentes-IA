@@ -7,6 +7,7 @@ antes de guardar. Esto reduce la superficie y deja registro de los intentos.
 import logging
 import re
 import unicodedata
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,15 @@ _PATRONES: dict[str, re.Pattern] = {
 
 
 class TextoNoPermitido(ValueError):
-    """El texto tiene forma de instrucción al sistema o un formato no admitido."""
+    """El texto tiene forma de instrucción al sistema o un formato no admitido.
+
+    Guarda la regla, el largo y la huella del texto rechazado, nunca el texto, para auditar sin copiarlo.
+    """
+    def __init__(self, mensaje: str, *, regla: str = "desconocida", valor: str = ""):
+        super().__init__(mensaje)
+        self.regla = regla
+        self.largo = len(valor)
+        self.sha256 = hashlib.sha256(valor.encode("utf-8")).hexdigest()
 
 
 def normalizar_texto(texto: str) -> str:
@@ -81,7 +90,8 @@ def sanitizar_observacion(texto: str) -> str:
         logger.warning("Observación bloqueada por patrones de instrucción: %s", ids)
         raise TextoNoPermitido(
             "La observación contiene texto con forma de instrucción al sistema. "
-            "Reescribila describiendo solo lo observado en el paciente."
+            "Reescribila describiendo solo lo observado en el paciente.",
+            regla="+".join(ids), valor=limpio,
         )
     return limpio
 
@@ -91,17 +101,18 @@ def sanitizar_dispositivo(texto: str) -> str:
     if not limpio:
         return ""
     if len(limpio) > MAX_DISPOSITIVO or not _RE_DISPOSITIVO.match(limpio):
-        raise TextoNoPermitido(f"Dispositivo con formato no permitido: {texto[:30]!r}")
+        raise TextoNoPermitido("Dispositivo con formato no permitido",
+                               regla="formato_dispositivo", valor=texto)
     ids = detectar_instrucciones(limpio)
     if ids:
         logger.warning("Dispositivo bloqueado por patrones de instrucción: %s", ids)
-        raise TextoNoPermitido("Dispositivo con formato no permitido")
+        raise TextoNoPermitido("Dispositivo con formato no permitido",
+                               regla="+".join(ids), valor=limpio)
     return limpio
 
 
 def sanitizar_dispositivos(lista: list[str]) -> list[str]:
     return [d for d in (sanitizar_dispositivo(x) for x in lista) if d]
-
 
 def validar_hora(texto: str) -> str:
     limpio = normalizar_texto(texto)

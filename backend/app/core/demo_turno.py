@@ -15,6 +15,7 @@ from datetime import date
 from langgraph.types import Command
 from sqlalchemy import func, select
 
+from .observabilidad import activar_langsmith
 from ..data.casos_prueba import CASOS, entrada_de
 from ..graph.ensamblado import armar_grafo
 from ..models.db_models import AlertaSeguridad, Paciente, PaseTurno, UsuarioEnfermeria
@@ -22,14 +23,6 @@ from .checkpointer import get_checkpointer, get_pool, make_thread_id
 from .config import settings
 from .db import SessionLocal
 from .llm import crear_redactores
-
-
-def _activar_langsmith() -> None:
-    # pydantic-settings lee el .env pero no lo exporta: LangSmith lee os.environ
-    if settings.langsmith_api_key:
-        os.environ.setdefault("LANGSMITH_API_KEY", settings.langsmith_api_key)
-        os.environ.setdefault("LANGSMITH_TRACING", "true")
-        os.environ.setdefault("LANGSMITH_PROJECT", "aura-dev")
 
 
 def main() -> None:
@@ -53,7 +46,7 @@ def main() -> None:
                          "`uv run python -m backend.app.core.seed --reset`")
 
     if not args.sin_traza:
-        _activar_langsmith()
+        activar_langsmith()
     redactor_alertas = redactor_evolucion = None
     if not args.sin_llm:
         redactor_alertas, redactor_evolucion = crear_redactores(settings.google_api_key)

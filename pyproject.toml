@@ -16,12 +16,14 @@ dependencies = [
     "langgraph>=1.2.12",
     "langgraph-checkpoint-postgres>=3.1.2",
     "psycopg[binary,pool]>=3.3.6",
+    "pwdlib[argon2]>=0.3.1",
     "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
     "pyjwt>=2.15.1",
     "pytest>=9.1.1",
     "python-dotenv>=1.2.3",
     "pyyaml>=6.0.3",
+    "slowapi>=0.1.10",
     "sqlalchemy>=2.1.1",
     "streamlit>=1.64.0",
 ]
@@ -36,3 +38,8 @@ build-backend = "uv_build"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+]
