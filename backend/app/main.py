@@ -110,6 +110,9 @@ def crear_app(*, session_factory=SessionLocal, grafo=None) -> FastAPI:
             return JSONResponse(status_code=503, content={"estado": "sin_base_de_datos"})
         return {"estado": "ok"}
 
+    @app.get("/live", tags=["sistema"])
+    def live():
+        return {"estado": "vivo"}
     app.include_router(auth.router)
     app.include_router(turnos.router)
     app.include_router(consultas.router)

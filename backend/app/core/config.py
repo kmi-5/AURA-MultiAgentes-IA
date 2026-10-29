@@ -5,8 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent  # sube hasta la
 
 class Settings(BaseSettings):
     database_url: str
-    google_api_key: str
-    jwt_secret_key: str
+    google_api_key: str | None = None
     langsmith_api_key: str | None = None
     langsmith_tracing: bool = False
     langsmith_project: str = "AURA-MultiAgentes-IA"

@@ -11,6 +11,7 @@ dependencies = [
     "alembic>=1.20.0",
     "bcrypt>=5.0.0",
     "fastapi>=0.141.1",
+    "httpx>=0.28.1",
     "langchain-google-genai>=4.4.0",
     "langchain-postgres>=0.0.18",
     "langgraph>=1.2.12",
@@ -26,6 +27,7 @@ dependencies = [
     "slowapi>=0.1.10",
     "sqlalchemy>=2.1.1",
     "streamlit>=1.64.0",
+    "uvicorn>=0.54.0",
 ]
 
 [project.scripts]
@@ -40,6 +42,4 @@ pythonpath = ["."]
 testpaths = ["tests"]
 
 [dependency-groups]
-dev = [
-    "httpx>=0.28.1",
-]
+dev = []
